@@ -39,6 +39,13 @@ rl.question(`Please be sure to have the 'passwords' file with the passwords and 
     passwords.push(line);
   }
 
+  if (numKeys > passwords.length) {
+    rl.close();
+    return console.log(chalk.red(`Not enough passwords in 'passwords' file for the key generation. They should be at least ${numKeys}. Please try again.`));
+  }
+  const resultKeys = [];
+  resultKeys.push('Private key | Address | Keystore | Password');
+
   for (let i = 0; i < numKeys; i++) {
     const wallet = Wallet['default'].generate();
     const address = wallet.getAddressString();
@@ -46,13 +53,19 @@ rl.question(`Please be sure to have the 'passwords' file with the passwords and 
     const password = passwords[i];
     const keystring = await wallet.toV3String(password);
     console.log(`Generating keystore ${keystoreFilename} for address ${address} with password ${password}`);
-          
+    resultKeys.push(wallet.getPrivateKeyString().concat(' | ', address, ' | ', keystoreFilename, ' | ', password));
     fs.writeFile(keystoreFilename, keystring, function(err) {
       if(err) {
         return console.log(err);
       }
     }); 
   }
+
+  fs.writeFile('result-keys', resultKeys.join('\n'), function(err) {
+    if(err) {
+      return console.log(err);
+    }
+  }); 
 
   console.log("\n");
   var ok = chalk.green(`JSON keystores generated.`);
